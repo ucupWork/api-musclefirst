@@ -1,27 +1,15 @@
 const { supabase } = require('../../config/db')
 const commonHelper = require('../../helper/common')
 
-const productsSizeController = {
+const productsRatingController = {
   createData: async (req, res) => {
     try {
-      const {
-        id,
-        size_code,
-        size_number,
-        size_type,
-        size_price,
-        size_qty,
-        size_is_active,
-        updated_at
-      } = req.body
+      const { id, rate_comment, rate_name, rate_count, updated_at } = req.body
       const { data, error } = await supabase.from('tb_prd_size').insert({
         id,
-        size_code,
-        size_number,
-        size_type,
-        size_price,
-        size_qty,
-        size_is_active,
+        rate_comment,
+        rate_name,
+        rate_count,
         updated_at
       })
 
@@ -37,15 +25,7 @@ const productsSizeController = {
   updateData: async (req, res) => {
     try {
       const { id } = req.params
-      const {
-        size_code,
-        size_number,
-        size_type,
-        size_price,
-        size_qty,
-        size_is_active,
-        updated_at
-      } = req.body
+      const { rate_comment, rate_name, rate_count, updated_at } = req.body
 
       // check if Data is existing
       const { data: existingData, error: existingDataError } = await supabase
@@ -69,12 +49,9 @@ const productsSizeController = {
       const { error } = await supabase
         .from('tb_prd_size')
         .update({
-          size_code,
-          size_number,
-          size_type,
-          size_price,
-          size_qty,
-          size_is_active,
+          rate_comment,
+          rate_name,
+          rate_count,
           updated_at
         })
         .eq('id', id)
@@ -154,6 +131,29 @@ const productsSizeController = {
       commonHelper.response(res, null, 500, 'Error retrieving all data')
     }
   },
+  getSingleDataById: async (req, res) => {
+    try {
+      const { id } = req.params
+      const { data: assetssData, error: fetchError } = await supabase
+        .from('tb_prd_size')
+        .select('*')
+        .eq('id', id)
+        .single()
+
+      if (fetchError) {
+        return commonHelper.response(
+          res,
+          fetchError.message,
+          404,
+          'Data not found'
+        )
+      }
+
+      commonHelper.response(res, assetssData, 200, 'Success getting data')
+    } catch (error) {
+      commonHelper.response(res, error, 500, 'Error getting data')
+    }
+  },
   deleteData: async (req, res) => {
     try {
       const { id } = req.params
@@ -187,4 +187,4 @@ const productsSizeController = {
   }
 }
 
-module.exports = productsSizeController
+module.exports = productsRatingController

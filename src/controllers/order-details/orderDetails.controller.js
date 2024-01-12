@@ -77,7 +77,7 @@ const orderDetailsController = {
       }
 
       const data = {
-        assetssData: updatedData[0],
+        fetchData: updatedData[0],
         userData: null
       }
 
@@ -135,22 +135,22 @@ const orderDetailsController = {
   getSingleDataById: async (req, res) => {
     try {
       const { id } = req.params
-      const { data: assetssData, error: agentError } = await supabase
+      const { data: fetchData, error: fetchError } = await supabase
         .from('tb_order_details')
         .select('*')
         .eq('id', id)
         .single()
 
-      if (agentError) {
+      if (fetchError) {
         return commonHelper.response(
           res,
-          agentError.message,
+          fetchError.message,
           404,
           'Data not found'
         )
       }
 
-      commonHelper.response(res, assetssData, 200, 'Success getting data')
+      commonHelper.response(res, fetchData, 200, 'Success getting data')
     } catch (error) {
       commonHelper.response(res, error, 500, 'Error getting data')
     }

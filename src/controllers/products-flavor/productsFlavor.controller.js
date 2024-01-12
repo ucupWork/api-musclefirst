@@ -146,6 +146,29 @@ const productsFlavorController = {
       commonHelper.response(res, null, 500, 'Error retrieving all data')
     }
   },
+  getSingleDataById: async (req, res) => {
+    try {
+      const { id } = req.params
+      const { data: assetssData, error: fetchError } = await supabase
+        .from('tb_prd_flavor')
+        .select('*')
+        .eq('id', id)
+        .single()
+
+      if (fetchError) {
+        return commonHelper.response(
+          res,
+          fetchError.message,
+          404,
+          'Data not found'
+        )
+      }
+
+      commonHelper.response(res, assetssData, 200, 'Success getting data')
+    } catch (error) {
+      commonHelper.response(res, error, 500, 'Error getting data')
+    }
+  },
   deleteData: async (req, res) => {
     try {
       const { id } = req.params
