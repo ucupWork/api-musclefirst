@@ -4,56 +4,51 @@ const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const authHelper = require('../../helper/auth')
 const commonHelper = require('../../helper/common')
-const { uploadToCloudinary } = require('../../middleware/upload')
 
-// const userSchema = Joi.object({
-//   username: Joi.string().required(),
-//   roles_id: Joi.string().required(),
-//   usr_email: Joi.string().email().required(),
-//   usr_password: Joi.string().min(6).required()
-// })
+const userSchema = Joi.object({
+  username: Joi.string().required(),
+  roles: Joi.string().required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).required()
+})
 
 const loginSchema = Joi.object({
-  usr_email: Joi.string().email().required(),
-  usr_password: Joi.string().required()
+  email: Joi.string().email().required(),
+  password: Joi.string().required()
 })
 
 const userController = {
-  // registerUser: async (req, res) => {
-  //   try {
-  //     const { error, value } = userSchema.validate(req.body)
-
-  //     if (error) {
-  //       return commonHelper.response(res, null, 400, error.details[0].message)
-  //     }
-
-  //     const { username, usr_email, roles_id, usr_password } = value
-  //     const passwordHash = bcrypt.hashSync(usr_password)
-  //     const { data, error: insertError } = await supabase.auth.signUp({
-  //       username,
-  //       usr_email,
-  //       roles_id,
-  //       usr_password: passwordHash
-  //     })
-
-  //     if (insertError) {
-  //       return commonHelper.response(res, null, 500, 'Error creating users!')
-  //     }
-
-  //     commonHelper.response(res, data, 201, 'User created successfully!')
-  //   } catch (error) {
-  //     console.error('Error creating user:', error)
-  //     commonHelper.response(res, null, 500, 'Error creating users!')
-  //   }
-  // },
   registerUser: async (req, res) => {
     try {
-      const { username, usr_email, roles_id, usr_password } = req.body
-      const { data, error } = await supabase.from('tb_users').insert({
+      const { error, value } = userSchema.validate(req.body)
+
+      if (error) {
+        return commonHelper.response(res, null, 400, error.details[0].message)
+      }
+      const { username, email, roles, password } = value
+
+      // Check if data exists
+      const { data: existingData, error: existingError } = await supabase
+        .from('tb_users')
+        .select('*')
+        .eq('email', email)
+
+      if (existingData.length > 0) {
+        return commonHelper.response(
+          res,
+          existingData.message,
+          404,
+          'Email already registered'
+        )
+      }
+
+      const passwordHash = bcrypt.hashSync(password)
+
+      const { data } = await supabase.from('tb_users').insert({
         username,
-        usr_email,
-        roles_id,
-        usr_password
+        email,
+        roles,
+        password: passwordHash
       })
       commonHelper.response(res, data, 200, 'user created!')
     } catch (error) {
@@ -85,7 +80,7 @@ const userController = {
       delete user.password
       const payload = {
         email: user.email,
-        password: user.password
+        roles: user.roles
       }
 
       user.token = authHelper.generateToken(payload)
@@ -102,9 +97,7 @@ const userController = {
   },
   getAllUsers: async (req, res) => {
     try {
-      const { data, error } = await supabase
-        .from('tb_users')
-        .select('id, username, email, phone, photo')
+      const { data, error } = await supabase.from('tb_users').select("'*'")
 
       if (error) {
         throw new Error(error.message)
@@ -127,7 +120,7 @@ const userController = {
 
       const { data: userData, error: userError } = await supabase
         .from('tb_users')
-        .select('id, username, email, phone, photo')
+        .select("'*'")
         .eq('id', id)
         .single()
 
@@ -148,11 +141,11 @@ const userController = {
   updateUser: async (req, res) => {
     try {
       const { id } = req.params
-      const { username, email, phone, password } = req.body
+      const { username, email, password } = req.body
 
       const { data: userData, error: userError } = await supabase
         .from('tb_users')
-        .select('id, username, email, phone, photo')
+        .select("'*'")
         .eq('id', id)
         .single()
 
@@ -167,15 +160,9 @@ const userController = {
       const updatedUserData = {}
       if (username) updatedUserData.username = username
       if (email) updatedUserData.email = email
-      if (phone) updatedUserData.phone = phone
       if (password) {
         const passwordHash = bcrypt.hashSync(password)
         updatedUserData.password = passwordHash
-      }
-
-      if (req.file) {
-        const imageUrlResponse = await uploadToCloudinary(req.file.path)
-        updatedUserData.photo = imageUrlResponse
       }
 
       const { data: updateData, error: updateError } = await supabase
@@ -217,7 +204,7 @@ const userController = {
 
       const { data: userData, error: userError } = await supabase
         .from('tb_users')
-        .select('id, username, email, phone, photo')
+        .select("'*'")
         .eq('id', id)
 
       if (userError) {

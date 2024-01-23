@@ -6,25 +6,24 @@ const postsController = {
     try {
       const {
         user_id,
-        category_id,
         title,
-        img_post,
-        img_link,
-        keywords,
-        excerpt,
-        highlight,
-        updated_at
+        img_blog,
+        slug,
+        category,
+        hashtag,
+        summary,
+        description
       } = req.body
-      const { data, error } = await supabase.from('tb_posts').insert({
+      const slugFormat = slug.toLowerCase().replace(/ /g, '-')
+      const { data, error } = await supabase.from('tb_blog').insert({
         user_id,
-        category_id,
         title,
-        img_post,
-        img_link,
-        keywords,
-        excerpt,
-        highlight,
-        updated_at
+        slug: slugFormat,
+        img_blog,
+        category,
+        hashtag,
+        summary,
+        description
       })
 
       if (error) {
@@ -40,19 +39,18 @@ const postsController = {
     try {
       const { id } = req.params
       const {
-        category_id,
         title,
-        img_post,
-        img_link,
-        keywords,
-        excerpt,
-        highlight,
-        updated_at
+        img_blog,
+        category,
+        hashtag,
+        summary,
+        description,
+        created_at
       } = req.body
 
       // check if Data is existing
       const { data: existingData, error: existingDataError } = await supabase
-        .from('tb_posts')
+        .from('tb_blog')
         .select('*')
         .eq('id', id)
 
@@ -70,16 +68,15 @@ const postsController = {
       }
 
       const { error } = await supabase
-        .from('tb_posts')
+        .from('tb_blog')
         .update({
-          category_id,
           title,
-          img_post,
-          img_link,
-          keywords,
-          excerpt,
-          highlight,
-          updated_at
+          img_blog,
+          category,
+          hashtag,
+          summary,
+          description,
+          created_at
         })
         .eq('id', id)
 
@@ -89,7 +86,7 @@ const postsController = {
 
       // Fetch the updated Data from the database
       const { data: updatedData, error: updatedDataError } = await supabase
-        .from('tb_posts')
+        .from('tb_blog')
         .select('*')
         .eq('id', id)
 
@@ -121,7 +118,7 @@ const postsController = {
       const end = start + pageSize - 1
 
       const { data, error } = await supabase
-        .from('tb_posts')
+        .from('tb_blog')
         .select("'*'")
         .range(start, end)
 
@@ -130,7 +127,7 @@ const postsController = {
       }
 
       const { error: countError, count } = await supabase
-        .from('tb_posts')
+        .from('tb_blog')
         .select('*', { count: 'exact' })
 
       if (countError) {
@@ -162,7 +159,7 @@ const postsController = {
     try {
       const { id } = req.params
       const { data: fetchData, error: fetchError } = await supabase
-        .from('tb_posts')
+        .from('tb_blog')
         .select('*')
         .eq('id', id)
         .single()
@@ -186,7 +183,7 @@ const postsController = {
       const { id } = req.params
 
       const { data: existingData, error: existingDataError } = await supabase
-        .from('tb_posts')
+        .from('tb_blog')
         .select('id')
         .eq('id', id)
 
@@ -199,7 +196,7 @@ const postsController = {
       }
 
       const { error: deleteError } = await supabase
-        .from('tb_posts')
+        .from('tb_blog')
         .delete()
         .eq('id', id)
 

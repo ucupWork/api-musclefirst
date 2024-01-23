@@ -8,7 +8,6 @@ const roleRouter = require('./role-user/role.routes')
 const addressRouter = require('./address/address.routes')
 // log
 const agentLogRouter = require('./agent-log/agentLog.routes')
-const userLogRouter = require('./users-log/usersLog.routes')
 // products
 const productsRouter = require('./products/products.routes')
 const productsCategoriesRouter = require('./products/products.routes')
@@ -25,7 +24,7 @@ const shippingRouter = require('./shipping/shipping.routes')
 const recipesRouter = require('./recipes/recipes.routes')
 const recipesCategoriesRouter = require('./recipes-categories/recipesCtg.routes')
 // post
-const postsRouter = require('./posts/posts.routes')
+const blogRouter = require('./blog/blog.routes')
 const postCategoriesRouter = require('./posts-categories/postsCtg.routes')
 // assets
 const assetsRouter = require('./assets/assets.routes')
@@ -60,7 +59,6 @@ router.use('/products-size', productsSizeRouter)
 
 // user & agent log
 router.use('/agent-log', agentLogRouter)
-router.use('/user-log', userLogRouter)
 
 // order router
 router.use('/order', orderRouter)
@@ -75,7 +73,7 @@ router.use('/recipes', recipesRouter)
 router.use('/recipes-categories', recipesCategoriesRouter)
 
 // posts
-router.use('/post', postsRouter)
+router.use('/blog', blogRouter)
 router.use('/post-categories', postCategoriesRouter)
 
 // shipping

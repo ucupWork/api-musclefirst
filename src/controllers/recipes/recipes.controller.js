@@ -6,23 +6,30 @@ const recipesController = {
     try {
       const {
         user_id,
-        category_id,
-        recipe_name,
+        tittle,
+        slug,
+        category,
         calories,
         protein,
         recipe_ingredients,
         img_recipe,
-        updated_at
+        hashtag,
+        summary,
+        video_link
       } = req.body
+      const slugFormat = slug.toLowerCase().replace(/ /g, '-')
       const { data, error } = await supabase.from('tb_recipes').insert({
         user_id,
-        category_id,
-        recipe_name,
+        tittle,
+        slug: slugFormat,
+        category,
         calories,
         protein,
         recipe_ingredients,
         img_recipe,
-        updated_at
+        hashtag,
+        summary,
+        video_link
       })
 
       if (error) {
@@ -38,13 +45,15 @@ const recipesController = {
     try {
       const { id } = req.params
       const {
-        category_id,
-        recipe_name,
+        tittle,
+        category,
         calories,
         protein,
         recipe_ingredients,
         img_recipe,
-        updated_at
+        hashtag,
+        summary,
+        video_link
       } = req.body
 
       // check if Data is existing
@@ -69,13 +78,16 @@ const recipesController = {
       const { error } = await supabase
         .from('tb_recipes')
         .update({
-          category_id,
-          recipe_name,
+          tittle,
+          slug,
+          category,
           calories,
           protein,
           recipe_ingredients,
           img_recipe,
-          updated_at
+          hashtag,
+          summary,
+          video_link
         })
         .eq('id', id)
 
