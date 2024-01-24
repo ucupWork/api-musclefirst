@@ -145,7 +145,7 @@ const assetsController = {
           res,
           agentError.message,
           404,
-          'assets not found'
+          'Assets not found'
         )
       }
 

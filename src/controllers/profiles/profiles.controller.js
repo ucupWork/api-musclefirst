@@ -2,7 +2,7 @@ const { supabase } = require('../../config/db')
 const commonHelper = require('../../helper/common')
 
 const profilesController = {
-  createDataAgent: async (req, res) => {
+  createData: async (req, res) => {
     try {
       const {
         id,
@@ -24,46 +24,6 @@ const profilesController = {
         updated_at,
         full_name,
         company_name,
-        avatar_url,
-        usr_phone,
-        sos_ig,
-        sos_tiktok,
-        sos_youtube,
-        usr_agent,
-        usr_member,
-        usr_team,
-        usr_premi
-      })
-
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      commonHelper.response(res, data, 201, 'Data saved successfully')
-    } catch (error) {
-      commonHelper.response(res, error, 500, 'Error while adding data')
-    }
-  },
-  createDataUser: async (req, res) => {
-    try {
-      const {
-        id,
-        updated_at,
-        full_name,
-        avatar_url,
-        usr_phone,
-        sos_ig,
-        sos_tiktok,
-        sos_youtube,
-        usr_agent,
-        usr_member,
-        usr_team,
-        usr_premi
-      } = req.body
-      const { data, error } = await supabase.from('tb_profiles').insert({
-        id,
-        updated_at,
-        full_name,
         avatar_url,
         usr_phone,
         sos_ig,

@@ -6,23 +6,30 @@ const recipesController = {
     try {
       const {
         user_id,
-        category_id,
-        recipe_name,
+        title,
+        slug,
+        category,
         calories,
         protein,
         recipe_ingredients,
         img_recipe,
-        updated_at
+        hashtag,
+        summary,
+        video_link
       } = req.body
+      const slugFormat = slug.toLowerCase().replace(/ /g, '-')
       const { data, error } = await supabase.from('tb_recipes').insert({
         user_id,
-        category_id,
-        recipe_name,
+        title,
+        slug: slugFormat,
+        category,
         calories,
         protein,
         recipe_ingredients,
         img_recipe,
-        updated_at
+        hashtag,
+        summary,
+        video_link
       })
 
       if (error) {
@@ -38,13 +45,15 @@ const recipesController = {
     try {
       const { id } = req.params
       const {
-        category_id,
-        recipe_name,
+        title,
+        category,
         calories,
         protein,
         recipe_ingredients,
         img_recipe,
-        updated_at
+        hashtag,
+        summary,
+        video_link
       } = req.body
 
       // check if Data is existing
@@ -69,13 +78,16 @@ const recipesController = {
       const { error } = await supabase
         .from('tb_recipes')
         .update({
-          category_id,
-          recipe_name,
+          title,
+          slug,
+          category,
           calories,
           protein,
           recipe_ingredients,
           img_recipe,
-          updated_at
+          hashtag,
+          summary,
+          video_link
         })
         .eq('id', id)
 
@@ -118,7 +130,7 @@ const recipesController = {
 
       const { data, error } = await supabase
         .from('tb_recipes')
-        .select("'*'")
+        .select('*, tb_users (id, username, email)')
         .range(start, end)
 
       if (error) {
@@ -152,6 +164,29 @@ const recipesController = {
       )
     } catch (error) {
       commonHelper.response(res, null, 500, 'Error retrieving all data')
+    }
+  },
+  getSingleDataById: async (req, res) => {
+    try {
+      const { id } = req.params
+      const { data: assetssData, error: fetchError } = await supabase
+        .from('tb_recipes')
+        .select('*')
+        .eq('id', id)
+        .single()
+
+      if (fetchError) {
+        return commonHelper.response(
+          res,
+          fetchError.message,
+          404,
+          'Data not found'
+        )
+      }
+
+      commonHelper.response(res, assetssData, 200, 'Success getting data')
+    } catch (error) {
+      commonHelper.response(res, error, 500, 'Error getting data')
     }
   },
   deleteData: async (req, res) => {

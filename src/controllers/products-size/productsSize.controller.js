@@ -1,24 +1,28 @@
 const { supabase } = require('../../config/db')
 const commonHelper = require('../../helper/common')
 
-const pageViewController = {
+const productsSizeController = {
   createData: async (req, res) => {
     try {
       const {
-        pv_path,
-        pv_browser,
-        pv_ip_address,
-        pv_engine,
-        pv_os,
-        pv_device
+        id,
+        size_code,
+        size_number,
+        size_type,
+        size_price,
+        size_qty,
+        size_is_active,
+        updated_at
       } = req.body
-      const { data, error } = await supabase.from('tb_page_view').insert({
-        pv_path,
-        pv_browser,
-        pv_ip_address,
-        pv_engine,
-        pv_os,
-        pv_device
+      const { data, error } = await supabase.from('tb_prd_size').insert({
+        id,
+        size_code,
+        size_number,
+        size_type,
+        size_price,
+        size_qty,
+        size_is_active,
+        updated_at
       })
 
       if (error) {
@@ -34,17 +38,18 @@ const pageViewController = {
     try {
       const { id } = req.params
       const {
-        pv_path,
-        pv_browser,
-        pv_ip_address,
-        pv_engine,
-        pv_os,
-        pv_device
+        size_code,
+        size_number,
+        size_type,
+        size_price,
+        size_qty,
+        size_is_active,
+        updated_at
       } = req.body
 
       // check if Data is existing
       const { data: existingData, error: existingDataError } = await supabase
-        .from('tb_page_view')
+        .from('tb_prd_size')
         .select('*')
         .eq('id', id)
 
@@ -62,14 +67,15 @@ const pageViewController = {
       }
 
       const { error } = await supabase
-        .from('tb_page_view')
+        .from('tb_prd_size')
         .update({
-          pv_path,
-          pv_browser,
-          pv_ip_address,
-          pv_engine,
-          pv_os,
-          pv_device
+          size_code,
+          size_number,
+          size_type,
+          size_price,
+          size_qty,
+          size_is_active,
+          updated_at
         })
         .eq('id', id)
 
@@ -79,7 +85,7 @@ const pageViewController = {
 
       // Fetch the updated Data from the database
       const { data: updatedData, error: updatedDataError } = await supabase
-        .from('tb_page_view')
+        .from('tb_prd_size')
         .select('*')
         .eq('id', id)
 
@@ -93,7 +99,7 @@ const pageViewController = {
       }
 
       const data = {
-        fetchData: updatedData[0],
+        assetssData: updatedData[0],
         userData: null
       }
 
@@ -111,7 +117,7 @@ const pageViewController = {
       const end = start + pageSize - 1
 
       const { data, error } = await supabase
-        .from('tb_page_view')
+        .from('tb_prd_size')
         .select("'*'")
         .range(start, end)
 
@@ -120,7 +126,7 @@ const pageViewController = {
       }
 
       const { error: countError, count } = await supabase
-        .from('tb_page_view')
+        .from('tb_prd_size')
         .select('*', { count: 'exact' })
 
       if (countError) {
@@ -151,8 +157,8 @@ const pageViewController = {
   getSingleDataById: async (req, res) => {
     try {
       const { id } = req.params
-      const { data: fetchData, error: fetchError } = await supabase
-        .from('tb_page_view')
+      const { data: assetssData, error: fetchError } = await supabase
+        .from('tb_prd_size')
         .select('*')
         .eq('id', id)
         .single()
@@ -166,7 +172,7 @@ const pageViewController = {
         )
       }
 
-      commonHelper.response(res, fetchData, 200, 'Success getting data')
+      commonHelper.response(res, assetssData, 200, 'Success getting data')
     } catch (error) {
       commonHelper.response(res, error, 500, 'Error getting data')
     }
@@ -176,7 +182,7 @@ const pageViewController = {
       const { id } = req.params
 
       const { data: existingData, error: existingDataError } = await supabase
-        .from('tb_page_view')
+        .from('tb_prd_size')
         .select('id')
         .eq('id', id)
 
@@ -185,11 +191,11 @@ const pageViewController = {
       }
 
       if (!existingData || existingData.length === 0) {
-        return commonHelper.response(res, null, 404, 'data not found')
+        return commonHelper.response(res, null, 404, 'Data not found')
       }
 
       const { error: deleteError } = await supabase
-        .from('tb_page_view')
+        .from('tb_prd_size')
         .delete()
         .eq('id', id)
 
@@ -197,11 +203,11 @@ const pageViewController = {
         throw new Error(deleteError.message)
       }
 
-      commonHelper.response(res, null, 200, 'data deleted successfully')
+      commonHelper.response(res, null, 200, 'Data deleted successfully')
     } catch (error) {
       commonHelper.response(res, error, 500, 'Error while deleting data')
     }
   }
 }
 
-module.exports = pageViewController
+module.exports = productsSizeController

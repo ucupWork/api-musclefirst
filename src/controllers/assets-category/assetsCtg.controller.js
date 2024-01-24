@@ -89,7 +89,7 @@ const assetsCategoryController = {
       }
 
       const data = {
-        assetssCtgData: updatedAssetsCtg[0],
+        fetchData: updatedAssetsCtg[0],
         userData: null
       }
 
@@ -157,16 +157,16 @@ const assetsCategoryController = {
   getAssetssCtgById: async (req, res) => {
     try {
       const { id } = req.params
-      const { data: assetssCtgData, error: agentError } = await supabase
+      const { data: fetchData, error: fetchError } = await supabase
         .from('tb_asset_categories')
         .select('*')
         .eq('id', id)
         .single()
 
-      if (agentError) {
+      if (fetchError) {
         return commonHelper.response(
           res,
-          agentError.message,
+          fetchError.message,
           404,
           'assets category not found'
         )
@@ -174,7 +174,7 @@ const assetsCategoryController = {
 
       commonHelper.response(
         res,
-        assetssCtgData,
+        fetchData,
         200,
         'Success getting assets category'
       )
