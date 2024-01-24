@@ -2,7 +2,6 @@
 /* eslint-disable new-cap */
 require('dotenv').config()
 const express = require('express')
-// const morgan = require('morgan')
 const cors = require('cors')
 const helmet = require('helmet')
 const xss = require('xss-clean')
@@ -14,7 +13,6 @@ const port = process.env.PORT || 8080
 const app = express()
 
 app.use(express.json())
-// app.use(morgan('dev'))
 app.use(cors())
 app.use(helmet())
 app.use(xss())
