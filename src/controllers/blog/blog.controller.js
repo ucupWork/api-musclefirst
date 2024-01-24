@@ -119,7 +119,7 @@ const postsController = {
 
       const { data, error } = await supabase
         .from('tb_blog')
-        .select("'*'")
+        .select('*, tb_users (id, username, email)')
         .range(start, end)
 
       if (error) {

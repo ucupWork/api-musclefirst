@@ -6,7 +6,7 @@ const recipesController = {
     try {
       const {
         user_id,
-        tittle,
+        title,
         slug,
         category,
         calories,
@@ -20,7 +20,7 @@ const recipesController = {
       const slugFormat = slug.toLowerCase().replace(/ /g, '-')
       const { data, error } = await supabase.from('tb_recipes').insert({
         user_id,
-        tittle,
+        title,
         slug: slugFormat,
         category,
         calories,
@@ -45,7 +45,7 @@ const recipesController = {
     try {
       const { id } = req.params
       const {
-        tittle,
+        title,
         category,
         calories,
         protein,
@@ -78,7 +78,7 @@ const recipesController = {
       const { error } = await supabase
         .from('tb_recipes')
         .update({
-          tittle,
+          title,
           slug,
           category,
           calories,
@@ -130,7 +130,7 @@ const recipesController = {
 
       const { data, error } = await supabase
         .from('tb_recipes')
-        .select("'*'")
+        .select('*, tb_users (id, username, email)')
         .range(start, end)
 
       if (error) {
