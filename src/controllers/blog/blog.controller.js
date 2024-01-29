@@ -1,18 +1,25 @@
 const { supabase } = require('../../config/db')
 const commonHelper = require('../../helper/common')
-const cloudinary = require('../../middleware/cloudinary')
 
 const postsController = {
   createData: async (req, res) => {
     try {
-      const { user_id, title, slug, category, hashtag, summary, description } =
-        req.body
+      const {
+        user_id,
+        title,
+        slug,
+        category,
+        img_blog,
+        hashtag,
+        summary,
+        description
+      } = req.body
 
-      let img_blog = null
-      if (req.file) {
-        const result = await cloudinary.uploadToCloudinary(req.file.path)
-        img_blog = result.secure_url
-      }
+      // let img_blog = null
+      // if (req.file) {
+      //   const result = await cloudinary.uploadToCloudinary(req.file.path)
+      //   img_blog = result.secure_url
+      // }
 
       const slugFormat = slug.toLowerCase().replace(/ /g, '-')
       const { data, error } = await supabase.from('tb_blog').insert({
