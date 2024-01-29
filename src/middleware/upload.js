@@ -26,7 +26,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage })
 
-async function uploadToCloudinary (localFilePath) {
+async function uploadToCloudinary(localFilePath) {
   try {
     const options = { folder: 'main' }
     if (path.extname(localFilePath) === '.mp4') {
