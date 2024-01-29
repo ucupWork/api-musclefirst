@@ -1,19 +1,19 @@
 const { supabase } = require('../../config/db')
 const commonHelper = require('../../helper/common')
+const cloudinary = require('../../middleware/cloudinary')
 
 const postsController = {
   createData: async (req, res) => {
     try {
-      const {
-        user_id,
-        title,
-        img_blog,
-        slug,
-        category,
-        hashtag,
-        summary,
-        description
-      } = req.body
+      const { user_id, title, slug, category, hashtag, summary, description } =
+        req.body
+
+      let img_blog = null
+      if (req.file) {
+        const result = await cloudinary.uploadToCloudinary(req.file.path)
+        img_blog = result.secure_url
+      }
+
       const slugFormat = slug.toLowerCase().replace(/ /g, '-')
       const { data, error } = await supabase.from('tb_blog').insert({
         user_id,
@@ -111,9 +111,88 @@ const postsController = {
   },
   getAllData: async (req, res) => {
     try {
+      const { data, error } = await supabase
+        .from('tb_blog')
+        .select('*, tb_users (id, username, email)')
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      commonHelper.response(res, data, 200, 'Success getting all data', data)
+    } catch (error) {
+      commonHelper.response(res, null, 500, 'Error retrieving all data')
+    }
+  },
+  getPagiDataFunfact: async (req, res) => {
+    try {
       const { page, limit } = req.query
       const currentPage = parseInt(page, 10) || 1
-      const pageSize = parseInt(limit, 10) || 15
+      const pageSize = parseInt(limit, 10) || 5
+      const start = (currentPage - 1) * pageSize
+      const end = start + pageSize - 1
+
+      const { data, error } = await supabase
+        .from('tb_blog')
+        .select('*')
+        .eq('category', 'Funfact')
+        .range(start, end)
+
+      if (error) {
+        throw new Error(error.message)
+      }
+      const { error: countError, count } = await supabase
+        .from('tb_blog')
+        .select('*', { count: 'exact' })
+
+      if (countError) {
+        throw new Error(countError.message)
+      }
+
+      const totalRecords = count
+
+      const totalPages = Math.ceil(totalRecords / pageSize)
+
+      const pagination = {
+        currentPage,
+        totalPages,
+        totalRecords
+      }
+
+      commonHelper.response(
+        res,
+        data,
+        200,
+        'Success getting all data',
+        pagination
+      )
+    } catch (error) {
+      console.error('Error:', error)
+      commonHelper.response(res, null, 500, 'Error retrieving all data')
+    }
+  },
+  getAllDataFunfact: async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('tb_blog')
+        .select('*')
+        .eq('category', 'Funfact')
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      commonHelper.response(res, data, 200, 'Success getting all data', data)
+    } catch (error) {
+      console.error('Error:', error)
+      commonHelper.response(res, null, 500, 'Error retrieving all data')
+    }
+  },
+  getPagiDataInfo: async (req, res) => {
+    try {
+      const { page, limit } = req.query
+      const currentPage = parseInt(page, 10) || 1
+      const pageSize = parseInt(limit, 10) || 5
       const start = (currentPage - 1) * pageSize
       const end = start + pageSize - 1
 
@@ -121,6 +200,7 @@ const postsController = {
         .from('tb_blog')
         .select('*, tb_users (id, username, email)')
         .range(start, end)
+        .eq('category', 'Informasi')
 
       if (error) {
         throw new Error(error.message)
@@ -151,6 +231,85 @@ const postsController = {
         'Success getting all data',
         pagination
       )
+    } catch (error) {
+      commonHelper.response(res, null, 500, 'Error retrieving all data')
+    }
+  },
+  getAllDataInfo: async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('tb_blog')
+        .select('*, tb_users (id, username, email)')
+        .eq('category', 'Informasi')
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      commonHelper.response(res, data, 200, 'Success getting all data', data)
+    } catch (error) {
+      commonHelper.response(res, null, 500, 'Error retrieving all data')
+    }
+  },
+  getPagiDataRek: async (req, res) => {
+    try {
+      const { page, limit } = req.query
+      const currentPage = parseInt(page, 10) || 1
+      const pageSize = parseInt(limit, 10) || 5
+      const start = (currentPage - 1) * pageSize
+      const end = start + pageSize - 1
+
+      const { data, error } = await supabase
+        .from('tb_blog')
+        .select('*, tb_users (id, username, email)')
+        .range(start, end)
+        .eq('category', 'Rekomendasi')
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      const { error: countError, count } = await supabase
+        .from('tb_blog')
+        .select('*', { count: 'exact' })
+
+      if (countError) {
+        throw new Error(countError.message)
+      }
+
+      const totalRecords = count
+
+      const totalPages = Math.ceil(totalRecords / pageSize)
+
+      const pagination = {
+        currentPage,
+        totalPages,
+        totalRecords
+      }
+
+      commonHelper.response(
+        res,
+        data,
+        200,
+        'Success getting all data',
+        pagination
+      )
+    } catch (error) {
+      commonHelper.response(res, null, 500, 'Error retrieving all data')
+    }
+  },
+  getAllDataRek: async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('tb_blog')
+        .select('*, tb_users (id, username, email)')
+        .eq('category', 'Rekomendasi')
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      commonHelper.response(res, data, 200, 'Success getting all data', data)
     } catch (error) {
       commonHelper.response(res, null, 500, 'Error retrieving all data')
     }
