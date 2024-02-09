@@ -15,12 +15,6 @@ const postsController = {
         description
       } = req.body
 
-      // let img_blog = null
-      // if (req.file) {
-      //   const result = await cloudinary.uploadToCloudinary(req.file.path)
-      //   img_blog = result.secure_url
-      // }
-
       const slugFormat = slug.toLowerCase().replace(/ /g, '-')
       const { data, error } = await supabase.from('tb_blog').insert({
         user_id,
@@ -39,6 +33,7 @@ const postsController = {
 
       commonHelper.response(res, data, 201, 'Data saved successfully')
     } catch (error) {
+      console.log(error)
       commonHelper.response(res, error, 500, 'Error while adding data')
     }
   },
