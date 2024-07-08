@@ -1,7 +1,8 @@
 const { supabase } = require('../../config/db')
 const commonHelper = require('../../helper/common')
+const blogModel = require('../../model/blog/blog.model')
 
-const postsController = {
+const blogController = {
   createData: async (req, res) => {
     try {
       const {
@@ -9,22 +10,58 @@ const postsController = {
         title,
         slug,
         category,
-        img_blog,
-        hashtag,
-        summary,
-        description
+        keywords,
+        quotes,
+        description,
+        meta_description,
+        publish_status
       } = req.body
 
+      const descFormat = description.replace('&lt;', '<')
       const slugFormat = slug.toLowerCase().replace(/ /g, '-')
+
+      // Check if the slug already exists
+      const existingBlog = await blogModel.findSlugBlog(slugFormat)
+      if (existingBlog) {
+        return commonHelper.response(
+          res,
+          { error: 'Slug already exists. Please use a different slug.' },
+          400,
+          'Slug already exists. Please use a different slug.'
+        )
+      }
+
+      const file = req.file
+      if (!file) {
+        return commonHelper.response(res, {}, 400, 'Image file is required.')
+      }
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('blog-images')
+        .upload(file.originalname, file.buffer, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) {
+        throw new Error(uploadError.message)
+      }
+
+      // Get the public URL of the uploaded image
+      const imgLink = `${process.env.SUPABASE_URL}/storage/v1/object/public/blog-images/${file.originalname}`
+
       const { data, error } = await supabase.from('tb_blog').insert({
         user_id,
         title,
         slug: slugFormat,
-        img_blog,
+        img_blog: imgLink,
         category,
-        hashtag,
-        summary,
-        description
+        keywords,
+        quotes,
+        description: descFormat,
+        meta_description,
+        publish_status,
+        created_at: new Date()
       })
 
       if (error) {
@@ -33,22 +70,15 @@ const postsController = {
 
       commonHelper.response(res, data, 201, 'Data saved successfully')
     } catch (error) {
-      console.log(error)
-      commonHelper.response(res, error, 500, 'Error while adding data')
+      console.error('Error creating blog post:', error)
+      commonHelper.response(res, error, 500, error.message)
     }
   },
   updateData: async (req, res) => {
     try {
       const { id } = req.params
-      const {
-        title,
-        img_blog,
-        category,
-        hashtag,
-        summary,
-        description,
-        created_at
-      } = req.body
+      const { title, img_blog, category, keywords, quotes, description } =
+        req.body
 
       // check if Data is existing
       const { data: existingData, error: existingDataError } = await supabase
@@ -75,10 +105,9 @@ const postsController = {
           title,
           img_blog,
           category,
-          hashtag,
-          summary,
-          description,
-          created_at
+          keywords,
+          quotes,
+          description
         })
         .eq('id', id)
 
@@ -372,4 +401,4 @@ const postsController = {
   }
 }
 
-module.exports = postsController
+module.exports = blogController

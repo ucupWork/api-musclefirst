@@ -5,10 +5,10 @@ const multerUpload = multer({
   storage: multer.diskStorage({}),
   fileFilter: (req, file, cb) => {
     const fileSize = parseInt(req.headers['content-length'])
-    const maxSize = 3 * 1024 * 1024
+    const maxSize = 2 * 1024 * 1024
     if (fileSize > maxSize) {
       const error = {
-        message: 'File size exceeds 3 MB'
+        message: 'File size exceeds 2 MB'
       }
       return cb(error, false)
     }
@@ -29,7 +29,7 @@ const multerUpload = multer({
 
 // middleware
 const uploadPhoto = (req, res, next) => {
-  const multerSingle = multerUpload.single('photo')
+  const multerSingle = multerUpload.single('img_recipe')
   multerSingle(req, res, (err) => {
     if (err) {
       failed(res, {

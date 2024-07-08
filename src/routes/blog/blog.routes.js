@@ -1,5 +1,6 @@
 const express = require('express')
 const blogController = require('../../controllers/blog/blog.controller')
+const upload = require('../../middleware/multerConfig')
 const router = express.Router()
 
 router
@@ -11,7 +12,7 @@ router
   .get('/rekomendasi', blogController.getAllDataRek)
   .get('/rekomendasi-pagination', blogController.getPagiDataRek)
   .get('/:id', blogController.getSingleDataById)
-  .post('/', blogController.createData)
+  .post('/', upload.single('img_blog'), blogController.createData)
   .put('/:id', blogController.updateData)
   .delete('/:id', blogController.deleteData)
 

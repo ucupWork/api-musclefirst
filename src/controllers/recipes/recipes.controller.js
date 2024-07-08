@@ -1,6 +1,6 @@
 const { supabase } = require('../../config/db')
 const commonHelper = require('../../helper/common')
-const { cloudinary } = require('../../middleware/cloudinary')
+const cloudinary = require('../../middleware/cloudinary')
 
 const recipesController = {
   createData: async (req, res) => {
