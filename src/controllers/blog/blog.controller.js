@@ -13,8 +13,7 @@ const blogController = {
         keywords,
         quotes,
         description,
-        meta_description,
-        publish_status
+        meta_description
       } = req.body
 
       const descFormat = description.replace('&lt;', '<')
@@ -60,7 +59,6 @@ const blogController = {
         quotes,
         description: descFormat,
         meta_description,
-        publish_status,
         created_at: new Date()
       })
 
@@ -75,69 +73,80 @@ const blogController = {
     }
   },
   updateData: async (req, res) => {
+    // still have bug
     try {
       const { id } = req.params
-      const { title, img_blog, category, keywords, quotes, description } =
-        req.body
+      const {
+        title,
+        category,
+        keywords,
+        quotes,
+        description,
+        meta_description
+      } = req.body
 
-      // check if Data is existing
-      const { data: existingData, error: existingDataError } = await supabase
+      // const descFormat = description.replace('&lt;', '<')
+
+      // Check if the blog post exists
+      const { data: existingBlog, error: existingBlogError } = await supabase
         .from('tb_blog')
         .select('*')
         .eq('id', id)
 
-      if (existingDataError) {
+      if (existingBlogError) {
         return commonHelper.response(
           res,
-          existingDataError.message,
+          existingBlogError.message,
           404,
-          'Data not found'
+          'Blog not found'
         )
       }
 
-      if (!existingData || existingData.length === 0) {
-        return commonHelper.response(res, null, 404, 'Data not found')
+      if (!existingBlog || existingBlog.length === 0) {
+        return commonHelper.response(res, null, 404, 'Blog not found')
       }
 
+      // Update the blog post
       const { error } = await supabase
         .from('tb_blog')
         .update({
           title,
-          img_blog,
           category,
           keywords,
           quotes,
-          description
+          description,
+          meta_description
         })
         .eq('id', id)
 
       if (error) {
-        return commonHelper.response(res, error, 500, 'Error updating Data')
+        throw new Error(error.message)
       }
 
-      // Fetch the updated Data from the database
-      const { data: updatedData, error: updatedDataError } = await supabase
+      // Fetch the updated blog post from the database
+      const { data: updatedBlog, error: fetchError } = await supabase
         .from('tb_blog')
         .select('*')
         .eq('id', id)
 
-      if (updatedDataError) {
+      if (fetchError || !updatedBlog || updatedBlog.length === 0) {
         return commonHelper.response(
           res,
-          updatedDataError.message,
+          fetchError.message,
           500,
-          'Error getting updated Data'
+          'Error fetching updated blog'
         )
       }
 
-      const data = {
-        fetchData: updatedData[0],
-        userData: null
-      }
-
-      commonHelper.response(res, data, 200, 'Data updated successfully')
+      commonHelper.response(
+        res,
+        updatedBlog[0],
+        200,
+        'Blog updated successfully'
+      )
     } catch (error) {
-      commonHelper.response(res, error, 500, 'Error updating Data')
+      console.error('Error updating blog post:', error)
+      commonHelper.response(res, error, 500, 'Error updating blog')
     }
   },
   getAllData: async (req, res) => {
@@ -348,13 +357,13 @@ const blogController = {
   getSingleDataById: async (req, res) => {
     try {
       const { id } = req.params
+
       const { data: fetchData, error: fetchError } = await supabase
         .from('tb_blog')
         .select('*')
         .eq('id', id)
-        .single()
 
-      if (fetchError) {
+      if (fetchError || !fetchData || fetchData === 0) {
         return commonHelper.response(
           res,
           fetchError.message,
@@ -363,7 +372,7 @@ const blogController = {
         )
       }
 
-      commonHelper.response(res, fetchData, 200, 'Success getting data')
+      commonHelper.response(res, fetchData[0], 200, 'Success getting data')
     } catch (error) {
       commonHelper.response(res, error, 500, 'Error getting data')
     }
@@ -372,31 +381,50 @@ const blogController = {
     try {
       const { id } = req.params
 
-      const { data: existingData, error: existingDataError } = await supabase
+      // Find the blog post to get the image link
+      const { data: blogData, error: blogError } = await supabase
         .from('tb_blog')
-        .select('id')
+        .select('img_blog')
         .eq('id', id)
+        .single()
 
-      if (existingDataError) {
-        throw new Error(existingDataError.message)
+      if (blogError || !blogData) {
+        return commonHelper.response(
+          res,
+          blogError || { error: 'Blog not found' },
+          404,
+          'Blog not found'
+        )
       }
 
-      if (!existingData || existingData.length === 0) {
-        return commonHelper.response(res, null, 404, 'Data not found')
-      }
+      const imgLink = blogData.img_blog
 
-      const { error: deleteError } = await supabase
+      // Extract the file name from the imgLink
+      const fileName = imgLink.split('/').pop()
+
+      // Delete the blog post from the database
+      const { data, error } = await supabase
         .from('tb_blog')
         .delete()
         .eq('id', id)
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      // Delete the image from storage
+      const { error: deleteError } = await supabase.storage
+        .from('blog-images')
+        .remove([fileName])
 
       if (deleteError) {
         throw new Error(deleteError.message)
       }
 
-      commonHelper.response(res, null, 200, 'Data deleted successfully')
+      commonHelper.response(res, data, 200, 'Data deleted successfully')
     } catch (error) {
-      commonHelper.response(res, error, 500, 'Error while deleting data')
+      console.error('Error deleting blog post:', error)
+      commonHelper.response(res, error, 500, error.message)
     }
   }
 }
