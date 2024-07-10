@@ -1,29 +1,65 @@
 const { supabase } = require('../../config/db')
 const commonHelper = require('../../helper/common')
-const cloudinary = require('../../middleware/cloudinary')
+const blogModel = require('../../model/blog/blog.model')
 
-const postsController = {
+const blogController = {
   createData: async (req, res) => {
     try {
-      const { user_id, title, slug, category, hashtag, summary, description } =
-        req.body
+      const {
+        user_id,
+        title,
+        slug,
+        category,
+        keywords,
+        quotes,
+        description,
+        meta_description
+      } = req.body
 
-      let img_blog = null
-      if (req.file) {
-        const result = await cloudinary.uploadToCloudinary(req.file.path)
-        img_blog = result.secure_url
+      const descFormat = description.replace('&lt;', '<')
+      const slugFormat = slug.toLowerCase().replace(/ /g, '-')
+
+      // Check if the slug already exists
+      const existingBlog = await blogModel.findSlugBlog(slugFormat)
+      if (existingBlog) {
+        return commonHelper.response(
+          res,
+          { error: 'Slug already exists. Please use a different slug.' },
+          400,
+          'Slug already exists. Please use a different slug.'
+        )
       }
 
-      const slugFormat = slug.toLowerCase().replace(/ /g, '-')
+      const file = req.file
+      if (!file) {
+        return commonHelper.response(res, {}, 400, 'Image file is required.')
+      }
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('blog-images')
+        .upload(file.originalname, file.buffer, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) {
+        throw new Error(uploadError.message)
+      }
+
+      // Get the public URL of the uploaded image
+      const imgLink = `${process.env.SUPABASE_URL}/storage/v1/object/public/blog-images/${file.originalname}`
+
       const { data, error } = await supabase.from('tb_blog').insert({
         user_id,
         title,
         slug: slugFormat,
-        img_blog,
+        img_blog: imgLink,
         category,
-        hashtag,
-        summary,
-        description
+        keywords,
+        quotes,
+        description: descFormat,
+        meta_description,
+        created_at: new Date()
       })
 
       if (error) {
@@ -32,81 +68,85 @@ const postsController = {
 
       commonHelper.response(res, data, 201, 'Data saved successfully')
     } catch (error) {
-      commonHelper.response(res, error, 500, 'Error while adding data')
+      console.error('Error creating blog post:', error)
+      commonHelper.response(res, error, 500, error.message)
     }
   },
   updateData: async (req, res) => {
+    // still have bug
     try {
       const { id } = req.params
       const {
         title,
-        img_blog,
         category,
-        hashtag,
-        summary,
+        keywords,
+        quotes,
         description,
-        created_at
+        meta_description
       } = req.body
 
-      // check if Data is existing
-      const { data: existingData, error: existingDataError } = await supabase
+      // const descFormat = description.replace('&lt;', '<')
+
+      // Check if the blog post exists
+      const { data: existingBlog, error: existingBlogError } = await supabase
         .from('tb_blog')
         .select('*')
         .eq('id', id)
 
-      if (existingDataError) {
+      if (existingBlogError) {
         return commonHelper.response(
           res,
-          existingDataError.message,
+          existingBlogError.message,
           404,
-          'Data not found'
+          'Blog not found'
         )
       }
 
-      if (!existingData || existingData.length === 0) {
-        return commonHelper.response(res, null, 404, 'Data not found')
+      if (!existingBlog || existingBlog.length === 0) {
+        return commonHelper.response(res, null, 404, 'Blog not found')
       }
 
+      // Update the blog post
       const { error } = await supabase
         .from('tb_blog')
         .update({
           title,
-          img_blog,
           category,
-          hashtag,
-          summary,
+          keywords,
+          quotes,
           description,
-          created_at
+          meta_description
         })
         .eq('id', id)
 
       if (error) {
-        return commonHelper.response(res, error, 500, 'Error updating Data')
+        throw new Error(error.message)
       }
 
-      // Fetch the updated Data from the database
-      const { data: updatedData, error: updatedDataError } = await supabase
+      // Fetch the updated blog post from the database
+      const { data: updatedBlog, error: fetchError } = await supabase
         .from('tb_blog')
         .select('*')
         .eq('id', id)
 
-      if (updatedDataError) {
+      if (fetchError || !updatedBlog || updatedBlog.length === 0) {
         return commonHelper.response(
           res,
-          updatedDataError.message,
+          fetchError.message,
           500,
-          'Error getting updated Data'
+          'Error fetching updated blog'
         )
       }
 
-      const data = {
-        fetchData: updatedData[0],
-        userData: null
-      }
-
-      commonHelper.response(res, data, 200, 'Data updated successfully')
+      commonHelper.response(
+        res,
+        updatedBlog[0],
+        200,
+        'Blog updated successfully'
+      )
     } catch (error) {
-      commonHelper.response(res, error, 500, 'Error updating Data')
+      console.error('Error updating blog post:', error)
+      commonHelper.response(res, error, 500, 'Error updating blog')
     }
   },
   getAllData: async (req, res) => {
@@ -317,13 +357,13 @@ const postsController = {
   getSingleDataById: async (req, res) => {
     try {
       const { id } = req.params
+
       const { data: fetchData, error: fetchError } = await supabase
         .from('tb_blog')
         .select('*')
         .eq('id', id)
-        .single()
 
-      if (fetchError) {
+      if (fetchError || !fetchData || fetchData === 0) {
         return commonHelper.response(
           res,
           fetchError.message,
@@ -332,7 +372,7 @@ const postsController = {
         )
       }
 
-      commonHelper.response(res, fetchData, 200, 'Success getting data')
+      commonHelper.response(res, fetchData[0], 200, 'Success getting data')
     } catch (error) {
       commonHelper.response(res, error, 500, 'Error getting data')
     }
@@ -341,33 +381,52 @@ const postsController = {
     try {
       const { id } = req.params
 
-      const { data: existingData, error: existingDataError } = await supabase
+      // Find the blog post to get the image link
+      const { data: blogData, error: blogError } = await supabase
         .from('tb_blog')
-        .select('id')
+        .select('img_blog')
         .eq('id', id)
+        .single()
 
-      if (existingDataError) {
-        throw new Error(existingDataError.message)
+      if (blogError || !blogData) {
+        return commonHelper.response(
+          res,
+          blogError || { error: 'Blog not found' },
+          404,
+          'Blog not found'
+        )
       }
 
-      if (!existingData || existingData.length === 0) {
-        return commonHelper.response(res, null, 404, 'Data not found')
-      }
+      const imgLink = blogData.img_blog
 
-      const { error: deleteError } = await supabase
+      // Extract the file name from the imgLink
+      const fileName = imgLink.split('/').pop()
+
+      // Delete the blog post from the database
+      const { data, error } = await supabase
         .from('tb_blog')
         .delete()
         .eq('id', id)
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      // Delete the image from storage
+      const { error: deleteError } = await supabase.storage
+        .from('blog-images')
+        .remove([fileName])
 
       if (deleteError) {
         throw new Error(deleteError.message)
       }
 
-      commonHelper.response(res, null, 200, 'Data deleted successfully')
+      commonHelper.response(res, data, 200, 'Data deleted successfully')
     } catch (error) {
-      commonHelper.response(res, error, 500, 'Error while deleting data')
+      console.error('Error deleting blog post:', error)
+      commonHelper.response(res, error, 500, error.message)
     }
   }
 }
 
-module.exports = postsController
+module.exports = blogController

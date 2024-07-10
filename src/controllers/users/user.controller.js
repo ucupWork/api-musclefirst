@@ -106,12 +106,7 @@ const userController = {
       commonHelper.response(res, data, 200, 'Successfully fetched all users')
     } catch (error) {
       console.error('Error fetching all users:', error)
-      commonHelper.response(
-        res,
-        null,
-        { message: 'An error occurred while fetching all users' },
-        500
-      )
+      commonHelper.response(res, null, { message: error.message }, 500)
     }
   },
   profileUser: async (req, res) => {
@@ -120,28 +115,80 @@ const userController = {
 
       const { data: userData, error: userError } = await supabase
         .from('tb_users')
-        .select("'*'")
+        .select('*')
         .eq('id', id)
-        .single()
 
-      if (userError || !userData) {
+      if (userError || !userData || userData.length === 0) {
         return commonHelper.response(res, null, 404, 'User not found')
       }
 
-      commonHelper.response(res, userData, 200, 'Successfully fetched user')
+      commonHelper.response(res, userData[0], 200, 'Successfully fetched user')
     } catch (error) {
       console.error('Error getting user:', error)
-      commonHelper.response(
-        res,
-        { message: 'An error occurred while getting user data' },
-        500
-      )
+      commonHelper.response(res, { message: error.message }, 500)
     }
   },
   updateUser: async (req, res) => {
     try {
       const { id } = req.params
-      const { username, email, password } = req.body
+      const { username } = req.body
+
+      const { data: userData, error: userError } = await supabase
+        .from('tb_users')
+        .select("'*'")
+        .eq('id', id)
+        .single()
+
+      if (userError) {
+        throw new Error(userError.message)
+      }
+
+      if (!userData) {
+        return commonHelper.response(res, null, 404, 'User not found')
+      }
+
+      const file = req.file
+      if (!file) {
+        return commonHelper.response(res, {}, 400, 'Image file is required.')
+      }
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('user-profile')
+        .upload(file.originalname, file.buffer, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) {
+        throw new Error(uploadError.message)
+      }
+
+      const img_user = `${process.env.SUPABASE_URL}/storage/v1/object/public/user-profile/${file.originalname}`
+
+      const updatedUserData = {}
+      if (username) updatedUserData.username = username
+      if (img_user) updatedUserData.img_user = img_user
+
+      const { data: updateData, error: updateError } = await supabase
+        .from('tb_users')
+        .update(updatedUserData)
+        .eq('id', id)
+
+      if (updateError) {
+        throw new Error(updateError.message)
+      }
+
+      const updatedUser = { ...updateData, password: undefined }
+      commonHelper.response(res, updatedUser, 200, 'User updated successfully')
+    } catch (error) {
+      console.error('Error updating user:', error)
+      commonHelper.response(res, { message: error.message }, 500)
+    }
+  },
+  changePassUser: async (req, res) => {
+    try {
+      const { id } = req.params
+      const { password } = req.body
 
       const { data: userData, error: userError } = await supabase
         .from('tb_users')
@@ -158,8 +205,6 @@ const userController = {
       }
 
       const updatedUserData = {}
-      if (username) updatedUserData.username = username
-      if (email) updatedUserData.email = email
       if (password) {
         const passwordHash = bcrypt.hashSync(password)
         updatedUserData.password = passwordHash
@@ -178,11 +223,7 @@ const userController = {
       commonHelper.response(res, updatedUser, 200, 'User updated successfully')
     } catch (error) {
       console.error('Error updating user:', error)
-      commonHelper.response(
-        res,
-        { message: 'An error occurred while updating the user' },
-        500
-      )
+      commonHelper.response(res, { message: error.message }, 500)
     }
   },
   refreshToken: (req, res) => {
@@ -225,11 +266,7 @@ const userController = {
       commonHelper.response(res, deletedUser, 200, 'User deleted successfully')
     } catch (error) {
       console.error('Error deleting user:', error)
-      commonHelper.response(
-        res,
-        { message: 'An error occurred while deleting the user' },
-        500
-      )
+      commonHelper.response(res, { message: error.message }, 500)
     }
   }
 }
