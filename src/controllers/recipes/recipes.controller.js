@@ -1,5 +1,6 @@
 const { supabase } = require('../../config/db')
 const commonHelper = require('../../helper/common')
+const cloudinary = require('../../middleware/cloudinary')
 
 const recipesController = {
   createData: async (req, res) => {
@@ -12,11 +13,20 @@ const recipesController = {
         calories,
         protein,
         recipe_ingredients,
-        img_recipe,
         hashtag,
         summary,
         video_link
       } = req.body
+
+      // Ensure req.file is properly populated with the uploaded file
+      if (!req.file) {
+        throw new Error('No file uploaded')
+      }
+
+      // Upload image to Cloudinary
+      const result = await cloudinary.uploader.upload(req.file.path)
+      const img_recipe = result.secure_url
+
       const slugFormat = slug.toLowerCase().replace(/ /g, '-')
       const { data, error } = await supabase.from('tb_recipes').insert({
         user_id,
@@ -36,8 +46,11 @@ const recipesController = {
         throw new Error(error.message)
       }
 
+      // Send success response
       commonHelper.response(res, data, 201, 'Data saved successfully')
     } catch (error) {
+      // Send error response
+      console.log(error)
       commonHelper.response(res, error, 500, 'Error while adding data')
     }
   },
