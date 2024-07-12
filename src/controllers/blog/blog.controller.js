@@ -395,6 +395,29 @@ const blogController = {
       commonHelper.response(res, null, 500, 'Error retrieving all data')
     }
   },
+  getBySlug: async (req, res) => {
+    try {
+      const { slug } = req.params
+
+      const { data: fetchData, error: fetchError } = await supabase
+        .from('tb_blog')
+        .select('*, tb_users (*)')
+        .eq('slug', slug)
+
+      if (fetchError || !fetchData || fetchData === 0) {
+        return commonHelper.response(
+          res,
+          fetchError.message,
+          404,
+          'Data not found'
+        )
+      }
+
+      commonHelper.response(res, fetchData[0], 200, 'Success getting data')
+    } catch (error) {
+      commonHelper.response(res, error, 500, 'Error getting data')
+    }
+  },
   deleteData: async (req, res) => {
     try {
       const { id } = req.params
