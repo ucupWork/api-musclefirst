@@ -153,7 +153,7 @@ const blogController = {
     try {
       const { data, error } = await supabase
         .from('tb_blog')
-        .select('*, tb_users (id, username, email)')
+        .select('*, tb_users (*)')
 
       if (error) {
         throw new Error(error.message)
@@ -238,7 +238,7 @@ const blogController = {
 
       const { data, error } = await supabase
         .from('tb_blog')
-        .select('*, tb_users (id, username, email)')
+        .select('*, tb_users (*)')
         .range(start, end)
         .eq('category', 'Informasi')
 
@@ -279,7 +279,7 @@ const blogController = {
     try {
       const { data, error } = await supabase
         .from('tb_blog')
-        .select('*, tb_users (id, username, email)')
+        .select('*, tb_users (*)')
         .eq('category', 'Informasi')
 
       if (error) {
@@ -301,7 +301,7 @@ const blogController = {
 
       const { data, error } = await supabase
         .from('tb_blog')
-        .select('*, tb_users (id, username, email)')
+        .select('*, tb_users (*)')
         .range(start, end)
         .eq('category', 'Rekomendasi')
 
@@ -342,7 +342,7 @@ const blogController = {
     try {
       const { data, error } = await supabase
         .from('tb_blog')
-        .select('*, tb_users (id, username, email)')
+        .select('*, tb_users (*)')
         .eq('category', 'Rekomendasi')
 
       if (error) {
@@ -360,7 +360,7 @@ const blogController = {
 
       const { data: fetchData, error: fetchError } = await supabase
         .from('tb_blog')
-        .select('*')
+        .select('*, tb_users (*)')
         .eq('id', id)
 
       if (fetchError || !fetchData || fetchData === 0) {
