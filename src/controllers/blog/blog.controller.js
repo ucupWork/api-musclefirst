@@ -377,6 +377,24 @@ const blogController = {
       commonHelper.response(res, error, 500, 'Error getting data')
     }
   },
+  getByCategories: async (req, res) => {
+    try {
+      const { category } = req.params
+
+      const { data, error } = await supabase
+        .from('tb_blog')
+        .select('*, tb_users (*)')
+        .eq('category', category)
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      commonHelper.response(res, data, 200, 'Success getting all data', data)
+    } catch (error) {
+      commonHelper.response(res, null, 500, 'Error retrieving all data')
+    }
+  },
   deleteData: async (req, res) => {
     try {
       const { id } = req.params
