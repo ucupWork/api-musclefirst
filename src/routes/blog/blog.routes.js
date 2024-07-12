@@ -6,6 +6,7 @@ const router = express.Router()
 router
   .get('/', blogController.getAllData)
   .get('/:id', blogController.getSingleDataById)
+  .get('/slug/:slug', blogController.getBySlug)
   .get('/category/:category', blogController.getByCategories)
   .post('/', upload.single('img_blog'), blogController.createData)
   .put('/:id', blogController.updateData)
