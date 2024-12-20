@@ -154,13 +154,13 @@ const blogController = {
       const { data, error } = await supabase
         .from('tb_blog')
         .select('*, tb_users (*)')
-
+        .order('created_at', { ascending: false }) // Order by created_at in descending order
       if (error) {
         throw new Error(error.message)
       }
-
       commonHelper.response(res, data, 200, 'Success getting all data', data)
     } catch (error) {
+      console.error('Error retrieving all data:', error.message)
       commonHelper.response(res, null, 500, 'Error retrieving all data')
     }
   },
